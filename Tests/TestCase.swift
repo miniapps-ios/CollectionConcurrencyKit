@@ -1,12 +1,12 @@
 /**
 *  CollectionConcurrencyKit
-*  Copyright (c) John Sundell 2021
+*  Copyright (c) John Sundell 2021 + Alessandro Oliva 2025
 *  MIT license, see LICENSE.md file for details
 */
 
 import XCTest
 
-class TestCase: XCTestCase {
+class TestCase: XCTestCase, @unchecked Sendable {
     let array = Array(0..<5)
     private(set) var collector: Collector!
 
@@ -16,7 +16,7 @@ class TestCase: XCTestCase {
     }
 
     func verifyErrorThrown<T>(
-        in file: StaticString = #file,
+        in file: StaticString = #filePath,
         at line: UInt = #line,
         from closure: (Error) async throws -> T
     ) async {
@@ -32,12 +32,13 @@ class TestCase: XCTestCase {
         }
     }
 
+    @MainActor
     func runAsyncTest(
         named testName: String = #function,
-        in file: StaticString = #file,
+        in file: StaticString = #filePath,
         at line: UInt = #line,
         withTimeout timeout: TimeInterval = 10,
-        test: @escaping ([Int], Collector) async throws -> Void
+        test: @Sendable @escaping ([Int], Collector) async throws -> Void
     ) {
         // This method is needed since Linux doesn't yet support async test methods.
         var thrownError: Error?
@@ -64,6 +65,7 @@ class TestCase: XCTestCase {
 
 extension TestCase {
     // Note: This is not an actor because we want it to execute concurrently
+    @MainActor
     class Collector {
         var values = [Int]()
         private let queue = DispatchQueue(label: "Collector")
@@ -71,8 +73,10 @@ extension TestCase {
         func collect(_ value: Int) async {
             await withCheckedContinuation { continuation in
                 queue.async {
-                    self.values.append(value)
-                    continuation.resume()
+                    DispatchQueue.main.async {
+                        self.values.append(value)
+                        continuation.resume()
+                    }
                 }
             } as Void
         }
@@ -97,8 +101,10 @@ extension TestCase {
                         return continuation.resume(throwing: error)
                     }
 
-                    self.values.append(value)
-                    continuation.resume()
+                    DispatchQueue.main.async {
+                        self.values.append(value)
+                        continuation.resume()
+                    }
                 }
             } as Void
         }

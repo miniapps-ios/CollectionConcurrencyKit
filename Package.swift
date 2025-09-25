@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:6.0
 
 /**
 *  CollectionConcurrencyKit
@@ -25,7 +25,10 @@ let package = Package(
         .testTarget(
             name: "CollectionConcurrencyKitTests",
             dependencies: ["CollectionConcurrencyKit"],
-            path: "Tests"
+            path: "Tests",
+            swiftSettings: [
+                .define("TIMING_TESTS")
+            ]
         )
     ]
 )

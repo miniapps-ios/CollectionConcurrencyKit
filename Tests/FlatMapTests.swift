@@ -1,13 +1,14 @@
 /**
 *  CollectionConcurrencyKit
-*  Copyright (c) John Sundell 2021
+*  Copyright (c) John Sundell 2021 + Alessandro Oliva 2025
 *  MIT license, see LICENSE.md file for details
 */
 
 import XCTest
 import CollectionConcurrencyKit
 
-final class FlatMapTests: TestCase {
+@MainActor
+final class FlatMapTests: TestCase, @unchecked Sendable {
     func testNonThrowingAsyncFlatMap() {
         runAsyncTest { array, collector in
             let values = await array.asyncFlatMap {
@@ -20,7 +21,7 @@ final class FlatMapTests: TestCase {
 
     func testThrowingAsyncFlatMapThatDoesNotThrow() {
         runAsyncTest { array, collector in
-            let values = try await array.asyncFlatMap {
+            let values = try await array.asyncThrowingFlatMap {
                 try await collector.tryCollectAndDuplicate($0)
             }
 
@@ -31,7 +32,7 @@ final class FlatMapTests: TestCase {
     func testThrowingAsyncFlatMapThatThrows() {
         runAsyncTest { array, collector in
             await self.verifyErrorThrown { error in
-                try await array.asyncFlatMap { int in
+                try await array.asyncThrowingFlatMap { int in
                     try await collector.tryCollectAndDuplicate(
                         int,
                         throwError: int == 3 ? error : nil
@@ -39,7 +40,9 @@ final class FlatMapTests: TestCase {
                 }
             }
 
-            XCTAssertEqual(collector.values, [0, 1, 2])
+            DispatchQueue.main.async {
+                XCTAssertEqual(collector.values, [0, 1, 2])
+            }
         }
     }
 

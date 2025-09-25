@@ -1,13 +1,14 @@
 /**
 *  CollectionConcurrencyKit
-*  Copyright (c) John Sundell 2021
+*  Copyright (c) John Sundell 2021 + Alessandro Oliva 2025
 *  MIT license, see LICENSE.md file for details
 */
 
 import XCTest
 import CollectionConcurrencyKit
 
-final class CompactMapTests: TestCase {
+@MainActor
+final class CompactMapTests: TestCase, @unchecked Sendable {
     func testNonThrowingAsyncCompactMap() {
         runAsyncTest { array, collector in
             let values = await array.asyncCompactMap { int in
@@ -20,7 +21,7 @@ final class CompactMapTests: TestCase {
 
     func testThrowingAsyncCompactMapThatDoesNotThrow() {
         runAsyncTest { array, collector in
-            let values = try await array.asyncCompactMap { int in
+            let values = try await array.asyncThrowingCompactMap { int in
                 try await int == 3 ? nil : collector.tryCollectAndTransform(int)
             }
 
@@ -31,7 +32,7 @@ final class CompactMapTests: TestCase {
     func testThrowingAsyncCompactMapThatThrows() {
         runAsyncTest { array, collector in
             await self.verifyErrorThrown { error in
-                try await array.asyncCompactMap { int in
+                try await array.asyncThrowingCompactMap { int in
                     int == 2 ? nil : try await collector.tryCollectAndTransform(
                         int,
                         throwError: int == 3 ? error : nil
@@ -39,7 +40,9 @@ final class CompactMapTests: TestCase {
                 }
             }
 
-            XCTAssertEqual(collector.values, [0, 1])
+            DispatchQueue.main.async {
+                XCTAssertEqual(collector.values, [0, 1])
+            }
         }
     }
 

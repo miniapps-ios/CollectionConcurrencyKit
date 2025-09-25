@@ -1,4 +1,6 @@
-# CollectionConcurrencyKit
+# miniapps-ios/CollectionConcurrencyKit
+
+This repo is a fork of [JohnSundell/CollectionConcurrencyKit](https://github.com/JohnSundell/CollectionConcurrencyKit)
 
 Welcome to **CollectionConcurrencyKit**, a lightweight Swift package that adds asynchronous and concurrent versions of the standard `map`, `flatMap`, `compactMap`, and `forEach` APIs to all Swift collections that conform to the `Sequence` protocol. That includes built-in types, like `Array`, `Set` and, `Dictionary`, as well as any custom collections that conform to that protocol.
 
@@ -8,7 +10,7 @@ CollectionConcurrencyKit can be used to implement high-performance data processi
 
 The async variants of CollectionConcurrencyKit’s APIs enable you to call `async`-marked functions within your various mapping and `forEach` iterations, while still maintaining a completely predictable, sequential execution order.
 
-For example, here’s how we could use `asyncMap` to download a series of HTML strings from a collection of URLs:
+For example, here’s how we could use `asyncThrowingMap` to download a series of HTML strings from a collection of URLs:
 
 ```swift
 let urls = [
@@ -17,16 +19,16 @@ let urls = [
     URL(string: "https://swiftbysundell.com")!
 ]
 
-let htmlStrings = try await urls.asyncMap { url -> String in
+let htmlStrings = try await urls.asyncThrowingMap { url -> String in
     let (data, _) = try await URLSession.shared.data(from: url)
     return String(decoding: data, as: UTF8.self)
 }
 ```
 
-And here’s how we could use `asyncCompactMap` to ignore any download that failed, by returning an optional value, rather than throwing an error:
+And here’s how we could use `asyncThrowingCompactMap` to ignore any download that failed, by returning an optional value, rather than throwing an error:
 
 ```swift
-let htmlStrings = await urls.asyncCompactMap { url -> String? in
+let htmlStrings = await urls.asyncThrowingCompactMap { url -> String? in
     do {
         let (data, _) = try await URLSession.shared.data(from: url)
         return String(decoding: data, as: UTF8.self)
@@ -36,11 +38,13 @@ let htmlStrings = await urls.asyncCompactMap { url -> String? in
 }
 ```
 
-Each of CollectionConcurrencyKit’s APIs come in both throwing and non-throwing variants, so since the above call to `asyncCompactMap` doesn’t throw, we don’t need to use `try` when calling it.
+Each of CollectionConcurrencyKit’s APIs come in both throwing and non-throwing variants, so since `asyncCompactMap` doesn’t throw, need to use `try` when calling `asyncThrowingCompactMap` only.
 
 ## Concurrency
 
 CollectionConcurrencyKit also includes concurrent variants of `forEach`, `map`, `flatMap`, and `compactMap`, which perform their iterations in parallel, while still maintaining a predictable order when producing their results.
+
+Each of them could be called setting a limit to the maximum concurrent operations in order to control the flow when handling dozens or hundreds concurrent tasks.
 
 For example, since our above HTML downloading code consists of completely separate operations, we could instead use `concurrentMap` to perform each of those operations in parallel for a significant speed boost:
 
@@ -85,7 +89,7 @@ Both throwing and non-throwing versions of all of the above APIs are included. T
 
 ## System requirements
 
-CollectionConcurrencyKit works on all operating system versions that support Swift’s concurrency system, which includes iOS 13+, macOS 10.15+, watchOS 6+, and tvOS 13+, as well as Linux (when using a Swift toolchain of version 5.5 or higher). Note that you need to use Xcode 13.2 or later when using CollectionConcurrencyKit on Apple’s platforms.
+CollectionConcurrencyKit works on all operating system versions that support Swift’s concurrency system, which includes iOS 15+ / macOS 12+ / watchOS 8+ / tvOS 15+, as well as Linux (when using a Swift toolchain of version 6.0 or higher). Note that you need to use Xcode 16 or later when using CollectionConcurrencyKit on Apple’s platforms.
 
 ## Installation
 
@@ -95,7 +99,7 @@ CollectionConcurrencyKit is distributed using the [Swift Package Manager](https:
 let package = Package(
     ...
     dependencies: [
-        .package(url: "https://github.com/JohnSundell/CollectionConcurrencyKit.git", from: "0.1.0")
+        .package(url: "https://github.com/miniapps-ios/CollectionConcurrencyKit.git", from: "0.2.0")
     ],
     ...
 )

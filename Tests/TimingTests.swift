@@ -1,8 +1,8 @@
 /**
-*  CollectionConcurrencyKit
-*  Copyright (c) John Sundell 2021
-*  MIT license, see LICENSE.md file for details
-*/
+ *  CollectionConcurrencyKit
+ *  Copyright (c) John Sundell 2021 + Alessandro Oliva 2025
+ *  MIT license, see LICENSE.md file for details
+ */
 
 import XCTest
 import CollectionConcurrencyKit
@@ -11,42 +11,43 @@ import CollectionConcurrencyKit
 // flag has been defined, since they involve delays. To run
 // these tests, use '$ swift test -Xswiftc -DTIMING_TESTS'.
 #if TIMING_TESTS
-final class TimingTests: TestCase {
+@MainActor
+final class TimingTests: TestCase, @unchecked Sendable {
     func testAsyncForEachExecutionIsSequential() {
         runSequentialTest { array in
-            try await array.asyncForEach { _ in
+            try await array.asyncThrowingForEach { _ in
                 try await self.delay()
             }
         }
     }
-
+    
     func testAsyncMapExecutionIsSequential() {
         runSequentialTest { array in
-            try await array.asyncMap { int -> Int in
+            try await array.asyncThrowingMap { int -> Int in
                 try await self.delay()
                 return int
             }
         }
     }
-
+    
     func testAsyncCompactMapExecutionIsSequential() {
         runSequentialTest { array in
-            try await array.asyncCompactMap { int -> Int? in
+            try await array.asyncThrowingCompactMap { int -> Int? in
                 try await self.delay()
                 return int
             }
         }
     }
-
+    
     func testAsyncFlatMapExecutionIsSequential() {
         runSequentialTest { array in
-            try await array.asyncFlatMap { int -> [Int] in
+            try await array.asyncThrowingFlatMap { int -> [Int] in
                 try await self.delay()
                 return [int]
             }
         }
     }
-
+    
     func testConcurrentForEachExecutionIsParallel() {
         runConcurrentTest { array in
             try await array.concurrentForEach { _ in
@@ -54,7 +55,7 @@ final class TimingTests: TestCase {
             }
         }
     }
-
+    
     func testConcurrentMapExecutionIsParallel() {
         runConcurrentTest { array in
             try await array.concurrentMap { int -> Int in
@@ -63,7 +64,7 @@ final class TimingTests: TestCase {
             }
         }
     }
-
+    
     func testConcurrentCompactMapExecutionIsParallel() {
         runConcurrentTest { array in
             try await array.concurrentCompactMap { int -> Int? in
@@ -72,7 +73,7 @@ final class TimingTests: TestCase {
             }
         }
     }
-
+    
     func testConcurrentFlatMapExecutionIsParallel() {
         runConcurrentTest { array in
             try await array.concurrentFlatMap { int -> [Int] in
@@ -88,24 +89,24 @@ private extension TimingTests {
         case lessThan(TimeInterval)
         case greaterThan(TimeInterval)
     }
-
+    
     var delayInterval: TimeInterval { 0.5 }
-
+    
     func delay() async throws {
         try await Task.sleep(nanoseconds: UInt64(delayInterval * 1_000_000_000))
     }
-
+    
     func verifyExecutionTime<T>(
         _ expectation: TimeExpectation,
         in file: StaticString,
         at line: UInt,
-        operation: @escaping ([Int]) async throws -> T
+        operation: @Sendable @escaping ([Int]) async throws -> T
     ) {
         runAsyncTest { array, _ in
             let startDate = Date()
             _ = try await operation(array)
             let executionTime = Date().timeIntervalSince(startDate)
-
+            
             switch expectation {
             case .lessThan(let time):
                 XCTAssertLessThanOrEqual(executionTime, time, file: file, line: line)
@@ -114,11 +115,11 @@ private extension TimingTests {
             }
         }
     }
-
+    
     func runSequentialTest<T>(
         in file: StaticString = #file,
         at line: UInt = #line,
-        using closure: @escaping ([Int]) async throws -> T
+        using closure: @Sendable @escaping ([Int]) async throws -> T
     ) {
         verifyExecutionTime(
             .greaterThan(TimeInterval(array.count) * delayInterval),
@@ -127,11 +128,11 @@ private extension TimingTests {
             operation: closure
         )
     }
-
+    
     func runConcurrentTest<T>(
         in file: StaticString = #file,
         at line: UInt = #line,
-        using closure: @escaping ([Int]) async throws -> T
+        using closure: @Sendable @escaping ([Int]) async throws -> T
     ) {
         verifyExecutionTime(
             .lessThan(delayInterval * 2),
