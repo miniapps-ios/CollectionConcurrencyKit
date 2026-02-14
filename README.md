@@ -104,7 +104,7 @@ CollectionConcurrencyKit is distributed using the [Swift Package Manager](https:
 let package = Package(
     ...
     dependencies: [
-        .package(url: "https://github.com/miniapps-ios/CollectionConcurrencyKit.git", from: "1.0.0")
+        .package(url: "https://github.com/miniapps-ios/CollectionConcurrencyKit.git", from: "1.0.1")
     ],
     ...
 )
