@@ -79,6 +79,11 @@ CollectionConcurrencyKit adds the following APIs to all `Sequence`-conforming Sw
     - `asyncMap`
     - `asyncCompactMap`
     - `asyncFlatMap`
+- Async Throwing variants that perform each of their operations in sequence, one after the other:
+    - `asyncThrowingForEach`
+    - `asyncThrowingMap`
+    - `asyncThrowingCompactMap`
+    - `asyncThrowingFlatMap`
 - Concurrent variants that perform each of their operations in parallel (while still maintaining a predictable output order):
     - `concurrentForEach`
     - `concurrentMap`
@@ -89,7 +94,7 @@ Both throwing and non-throwing versions of all of the above APIs are included. T
 
 ## System requirements
 
-CollectionConcurrencyKit works on all operating system versions that support Swift’s concurrency system, which includes iOS 15+ / macOS 12+ / watchOS 8+ / tvOS 15+, as well as Linux (when using a Swift toolchain of version 6.0 or higher). Note that you need to use Xcode 16 or later when using CollectionConcurrencyKit on Apple’s platforms.
+CollectionConcurrencyKit works on all operating system versions that support Swift’s concurrency system, which includes iOS 26+ / macOS 26+ / watchOS 26+ / tvOS 26+ , as well as Linux (when using a Swift toolchain of version 6.2 or higher). Note that you need to use Xcode 26+ or later when using CollectionConcurrencyKit on Apple’s platforms.
 
 ## Installation
 
@@ -99,7 +104,7 @@ CollectionConcurrencyKit is distributed using the [Swift Package Manager](https:
 let package = Package(
     ...
     dependencies: [
-        .package(url: "https://github.com/miniapps-ios/CollectionConcurrencyKit.git", from: "0.2.1")
+        .package(url: "https://github.com/miniapps-ios/CollectionConcurrencyKit.git", from: "1.0.0")
     ],
     ...
 )
